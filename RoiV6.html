@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twilight ROI Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #2e8ab8; padding: 20px; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+    h1 { text-align: center; color: #1e3a8a; margin-bottom: 30px; font-size: 2.5em; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .form-section { background: #f8f9fa; padding: 20px; border-radius: 10px; border: 2px solid #e9ecef; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+    input, select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+    input:focus, select:focus { outline: none; border-color: #007bff; }
+    .toggle-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
+    .toggle-btn { padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+    .toggle-btn.active { background: #007bff; color: white; }
+    .toggle-btn.inactive { background: #e9ecef; color: #666; }
+    .range-input { width: 100%; margin: 10px 0; }
+    .range-labels { display: flex; justify-content: space-between; font-size: 14px; color: #666; }
+    .breakdown { background: #fff3cd; padding: 15px; border-radius: 5px; margin-top: 10px; font-size: 13px; }
+    .breakdown div { margin: 5px 0; }
+    .breakdown-card { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px; border: 2px solid #e9ecef; }
+    .breakdown-item { display: flex; justify-content: space-between; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    .breakdown-medical { background: #d4edda; border: 1px solid #c3e6cb; }
+    .breakdown-diabetes { background: #fff3cd; border: 1px solid #ffeaa7; }
+    .submit-btn { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; margin-top: 30px; transition: all 0.3s; }
+    .submit-btn.enabled { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+    .submit-btn.disabled { background: #6c757d; color: #adb5bd; cursor: not-allowed; }
+    .hidden { display: none; }
+    .info-box { background: #e3f2fd; border: 1px solid #bbdefb; padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 14px; }
+    .radio-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+    .radio-option { display: flex; align-items: center; cursor: pointer; padding: 15px 20px; border: 3px solid #ddd; border-radius: 10px; transition: all 0.3s; background: white; min-width: 180px; }
+    .radio-option:hover { border-color: #007bff; background: #f0f8ff; }
+    .radio-option.selected { border-color: #007bff; background: #e3f2fd; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); }
+    .radio-circle { width: 20px; height: 20px; border: 3px solid #ccc; border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; }
+    .radio-option.selected .radio-circle { border-color: #007bff; }
+    .radio-circle-inner { width: 10px; height: 10px; border-radius: 50%; background: #007bff; opacity: 0; transition: opacity 0.3s; }
+    .radio-option.selected .radio-circle-inner { opacity: 1; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 2em; }
+      .radio-group { flex-direction: column; }
+      .radio-option { min-width: 100%; }
+    }
+
+    .section { margin-bottom: 24px; }
+    label.section-label { display: block; font-size: 18px; font-weight: 600; color: #374151; margin-bottom: 12px; }
+    select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; background-color: white; font-size: 16px; outline: none; box-sizing: border-box; }
+    select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+
+    .checkbox-container { margin-top: 16px; padding: 20px; background-color: white; border-radius: 6px; border: 1px solid #e5e7eb; display: none; min-width: 400px; }
+    .checkbox-container.show { display: block; }
+    .checkbox-title { font-weight: 500; color: #374151; margin-bottom: 12px; }
+    .checkbox-item { margin-bottom: 12px; min-width: 350px; }
+    .checkbox-item label { display: flex; align-items: center; cursor: pointer; color: #374151; flex-wrap: nowrap; }
+    .checkbox-item input[type="checkbox"] { margin-right: 12px; width: 16px; height: 16px; accent-color: #3b82f6; }
+
+    /* Print styles for PDF export - Single Page Optimized */
+    @media print {
+      body { background: white !important; padding: 0 !important; margin: 0 !important; }
+      button { display: none !important; }
+      .container { box-shadow: none !important; border-radius: 0 !important; max-width: 100% !important; padding: 10px !important; margin: 0 !important; }
+      h1 { font-size: 20px !important; margin-bottom: 10px !important; text-align: center; }
+      h2 { font-size: 16px !important; margin-bottom: 8px !important; }
+      h3 { font-size: 14px !important; margin-bottom: 6px !important; }
+      div[style*="padding: 20px"] { padding: 8px !important; }
+      div[style*="padding: 15px"] { padding: 6px !important; }
+      div[style*="margin-bottom: 20px"] { margin-bottom: 8px !important; }
+      div[style*="margin: 10px"] { margin: 3px !important; }
+      div[style*="font-size: 14px"] { font-size: 11px !important; line-height: 1.3 !important; }
+      div[style*="font-size: 16px"] { font-size: 13px !important; }
+      div[style*="font-size: 18px"] { font-size: 14px !important; }
+      .breakdown-card, .preview-card,
+      div[style*="background: #e8f5e8"],
+      div[style*="background: #fff3e0"],
+      div[style*="background: #f3e5f5"] { margin-bottom: 6px !important; padding: 8px !important; page-break-inside: avoid; }
+      div[style*="display: flex"] { margin: 2px 0 !important; padding: 2px 0 !important; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .breakdown-card, .preview-card { page-break-inside: avoid; }
+      h1, h2, h3 { page-break-after: avoid; }
+      .form-section { page-break-inside: avoid; }
+      div[style*="background"] { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      @page { margin: 0.3in 0.3in; size: letter; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Twilight ROI Calculator</h1>
+
+    <div class="form-grid">
+      <div class="form-section">
+        <div class="form-group">
+          <label>Practice Type</label>
+          <select id="practiceType">
+            <option value="" disabled selected>Select Practice Type</option>
+            <option value="single">Single Doctor Practice</option>
+            <option value="multi">Multi-Doctor Practice</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Purchase Option</label>
+          <select id="purchaseOption">
+            <option value="" disabled selected>Select Purchase Option</option>
+            <option value="lease">Lease - $4,997/year</option>
+            <option value="buy">Buy - $9,799 upfront + $799/year maintenance (Year 1 included)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Patient Volume</label>
+          <div class="toggle-buttons">
+            <button class="toggle-btn active" id="weeklyBtn">Weekly</button>
+            <button class="toggle-btn inactive" id="monthlyBtn">Monthly</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div id="weeklyInput">
+            <label>Patients per week</label>
+            <input type="number" id="patientsPerWeek" placeholder="Enter weekly patients" />
+            <div id="weeklyPreview" class="info-box hidden">
+              <span id="monthlyEquivalent">0</span> patients per month
+            </div>
+          </div>
+          <div id="monthlyInput" class="hidden">
+            <label>Patients per month</label>
+            <input type="number" id="patientsPerMonth" placeholder="Enter monthly patients" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Percentage of patients over 50yrs old</label>
+          <input type="range" id="over50Range" class="range-input" min="0" max="100" value="50" step="5"
+            list="over50Detents" />
+          <datalist id="over50Detents">
+            <option value="0"></option>
+            <option value="25"></option>
+            <option value="50"></option>
+            <option value="75"></option>
+            <option value="100"></option>
+          </datalist>
+          <div class="range-labels">
+            <span>0%</span>
+            <strong><span id="over50Value">50%</span></strong>
+            <span>100%</span>
+          </div>
+          <div id="over50Preview" class="info-box">
+            <strong><span id="over50Count">0</span> patients</strong> over 50 will be screened monthly
+          </div>
+        </div>
+
+        <!-- AMD Dropdown -->
+        <div class="section">
+          <label class="section-label">Do you have patients with AMD?</label>
+          <select id="amdSelect" onchange="handleAmdChange()">
+            <option value="">Select AMD Patient Options</option>
+            <option value="AMD">Yes I have patients with AMD</option>
+            <option value="No AMD">No Patients have AMD</option>
+          </select>
+
+          <div id="amdCheckboxes" class="checkbox-container">
+            <div class="form-group">
+              <label>What is the percentage of monthly patients that have AMD: </label><strong><span
+                  id="amdPercentageDisplay">75%</span></strong>
+              <input type="range" id="amdRange" class="range-input" min="0" max="100" value="50" step="5"
+                list="amdDetents" onchange="updateAmdPatients()" />
+              <datalist id="amdDetents">
+                <option value="0"></option>
+                <option value="25"></option>
+                <option value="50"></option>
+                <option value="75"></option>
+                <option value="100"></option>
+              </datalist>
+
+              <div class="range-labels">
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+
+              <div style="margin-top: 10px; font-size: 14px;">
+                Estimated AMD Patients: <span id="amdPatientCount">0</span> patients/month
+              </div>
+            </div>
+
+            <div class="checkbox-title">AMD Testing Options:</div>
+
+            <div class="checkbox-item">
+              <label>
+                <input type="checkbox" id="amd1" onchange="updateAmdBreakdown();" />
+                Routine Eye Exam -<i>$90.00</i>
+                <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">vsp direct</div>
+              </label>
+            </div>
+
+            <div class="checkbox-item">
+              <label>
+                <input type="checkbox" id="amd2" onchange="updateAmdBreakdown();" />
+                Fundus Photography -<i>$36.00</i>
+                <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">optos.com</div>
+              </label>
+            </div>
+
+            <div class="checkbox-item">
+              <label>
+                <input type="checkbox" id="amd3" onchange="updateAmdBreakdown();" />
+                OCTA retina -<i>$57.00</i>
+                <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">optos.com</div>
+              </label>
+            </div>
+
+            <div class="checkbox-item">
+              <label>
+                <input type="checkbox" id="amd4" onchange="updateAmdBreakdown();" />
+                Fluorescein Angiography -<i>$153.00</i>
+                <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">optos.com</div>
+              </label>
+            </div>
+
+            
+            <div class="checkbox-item">
+              <label>
+                <input type="checkbox" id="amd5" onchange="updateAmdBreakdown();" />
+                Dark Adaptation (Fellow Eye) -<i>$58.83</i>
+              </label>
+            </div>
+          </div>
+
+          <!-- Diabetes Section -->
+          <div class="section">
+            <label style="margin-top: 8px;" class="section-label">Do you have patients with Diabetic Retinopathy (DR)?</label>
+            <select id="diabetesSelect" onchange="handleDiabetesChange()">
+              <option value="">Select DR Option</option>
+              <option value="Diabetes">Yes I have patients with DR</option>
+              <option value="No Diabetes">No patients have DR</option>
+            </select>
+
+            <div id="diabetesCheckboxes" class="checkbox-container">
+              <div class="form-group">
+                <label>Percentage of Patients with DR</label>
+                <strong><span id="diabetesPercentageDisplay">75%</span></strong>
+                <input type="range" id="diabetesRange" class="range-input" min="0" max="100" value="50" step="5"
+                  list="diabetesDetents" onchange="updateDiabetesPatients()" />
+                <datalist id="diabetesDetents">
+                  <option value="0"></option>
+                  <option value="25"></option>
+                  <option value="50"></option>
+                  <option value="75"></option>
+                  <option value="100"></option>
+                </datalist>
+
+                <div class="range-labels">
+                  <span>0%</span>
+                  <span>50%</span>
+                  <span>100%</span>
+                </div>
+
+                <div style="margin-top: 5px; font-size: 14px;">
+                  Estimated Patients with Diabetes: <span id="diabetesPatientCount">0</span> patients/month
+                </div>
+              </div>
+
+              <div class="checkbox-title">DR Testing Options:</div>
+
+              <div class="checkbox-item">
+                <label>
+                  <input type="checkbox" id="diabetes1" onchange="updateDiabetesBreakdown();" />
+                  Routine Eye Exam - <i>$90.00</i>
+                  <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">vsp direct</div>
+                </label>
+              </div>
+
+              <div class="checkbox-item">
+                <label>
+                  <input type="checkbox" id="diabetes2" onchange="updateDiabetesBreakdown();" />
+                  Fundus Photography - <i>$36.00</i>
+                  <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">optos.com</div>
+                </label>
+              </div>
+
+              <div class="checkbox-item">
+                <label>
+                  <input type="checkbox" id="diabetes3" onchange="updateDiabetesBreakdown();" />
+                  Visual Fields Exam - <i>$84.00</i>
+                  <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">eyecarels.com</div>
+                </label>
+              </div>
+
+              <div class="checkbox-item">
+                <label>
+                  <input type="checkbox" id="diabetes4" onchange="updateDiabetesBreakdown();" />
+                  Extend. Opthalmoscopy- <i>$130.00</i>
+                  <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">carecredit.com</div>
+                </label>
+              </div>
+
+              <div class="checkbox-item">
+                <label>
+                  <input type="checkbox" id="diabetes5" onchange="updateDiabetesBreakdown();" />
+                  ERG Exam - <i>$126.00</i>
+                  <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">reviewop.com</div>
+                </label>
+              </div>
+
+             
+              <div class="checkbox-item">
+                <label>
+                  <input type="checkbox" id="diabetes6" onchange="updateDiabetesBreakdown();" />
+                  Dark Adaptation (Fellow Eye) - <i>$58.83</i>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Baseline Screening Financial Model</label>
+          <div style="margin-top: 8px; font-size: 10px;">
+            (Monthly Program Cost / (50+ yr Patients /mo)) + mask cost
+          </div>
+          <div style="margin-top: 5px; font-size: 14px; color: #666;">
+            <span id="baselinePatientCount">0</span> baseline screening patients (over 50 without AMD/DR)
+          </div>
+
+          <div class="radio-group">
+            <div class="radio-option selected" id="revenueOption">
+              <div class="radio-circle"><div class="radio-circle-inner"></div></div>
+              <div style="flex: 1;">
+                <span><strong>Patient Pay<br></strong><small>Patient Cost for Screening</small></span>
+                <div style="margin-top: 8px; display: flex; align-items: center;">
+                  <span style="font-size: 16px; font-weight: bold; margin-right: 4px;">$</span>
+                  <span id="patientPayDisplay" style="font-size: 18px; font-weight: bold; color: #007bff;">0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="radio-option" id="expenseOption">
+              <div class="radio-circle"><div class="radio-circle-inner"></div></div>
+              <div style="flex: 1;">
+                <span><strong>Practice Pay</strong><br><small>Practice Incurs the<br> Overhead Cost</small></span>
+                <div style="margin-top: 8px; display: flex; align-items: center;">
+                  <span style="font-size: 16px; font-weight: bold; margin-right: 4px;">$</span>
+                  <span id="practicePayDisplay" style="font-size: 18px; font-weight: bold; color: #007bff;">0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div id="breakdownCard" class="breakdown-card hidden">
+          <h3>Monthly Screening Breakdown</h3>
+
+          <!-- AMD -->
+          <div class="breakdown-item breakdown-medical hidden">
+            <div style="flex: 1;">
+              <strong>AMD (<span id="amdCount">0</span> patients)</strong>
+              <div style="font-size: 12px; margin-top: 8px;" id="amdTestsList"></div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 20px; font-weight: bold; color: #28a745;">
+                $<span id="amdPerPatientTotal">0</span>
+              </div>
+              <div style="font-size: 12px; color: #666;">Yearly per patient</div>
+            </div>
+          </div>
+
+          <!-- Diabetes -->
+          <div class="breakdown-item breakdown-diabetes hidden">
+            <div style="flex: 1;">
+              <strong>Diabetic Retinopathy (<span id="diabetesCount">0</span> patients)</strong>
+              <div style="font-size: 12px; margin-top: 8px;" id="diabetesTestsList"></div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 20px; font-weight: bold; color: #28a745;">
+                $<span id="diabetesPerPatientTotal">0</span>
+              </div>
+              <div style="font-size: 12px; color: #666;">Yearly per patient</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="submitBtn" class="submit-btn disabled" disabled>
+      <span id="submitText">Get Full ROI Report</span>
+    </button>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Data model
+    // -----------------------------
+    var data = {
+      practiceType: '',
+      purchaseOption: '',
+      inputType: 'weekly',
+      patientsPerWeek: 0,
+      patientsPerMonth: 0,
+      over50Percent: 50,
+      amdPercent: 0,
+      diabetesPercent: 0,
+      baselineModel: 'revenue'
+    };
+
+    var results = {
+      monthlyPatients: 0,
+      over50Patients: 0,
+      baselinePatients: 0,
+      amdPatients: 0,
+      diabetesPatients: 0,
+      medicalPatients: 0 // not used in this version, but kept to avoid undefined references
+    };
+
+    // Constants
+    const SCREENING_REIMBURSEMENT = 58.83;
+
+    function setText(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function selectBaseline(option) {
+      data.baselineModel = option;
+      var rev = document.getElementById('revenueOption');
+      var exp = document.getElementById('expenseOption');
+      if (rev) rev.className = option === 'revenue' ? 'radio-option selected' : 'radio-option';
+      if (exp) exp.className = option === 'expense' ? 'radio-option selected' : 'radio-option';
+      calculate();
+      updateBreakdown();
+    }
+
+    // -----------------------------
+    // Purchase cost logic fix
+    // Year 1 maintenance included with purchase.
+    // For 3-year modeling:
+    // Buy 3-year total = 9799 + (799 * 2)
+    // Lease 3-year total = 4997 * 3
+    // For monthly program cost (used to compute screening cost per patient),
+    // we use the 3-year average monthly equivalent for buy: (9799 + 799*2)/36.
+    // -----------------------------
+    function getMonthlyDeviceCost() {
+      if (data.purchaseOption === 'lease') return 4997 / 12;
+      if (data.purchaseOption === 'buy') return (9799 + (799 * 2)) / 36; // ✅ maintenance year1 removed
+      return 0;
+    }
+
+    function getMonthlySubscription() {
+      if (data.practiceType === 'single') return 150;
+      if (data.practiceType === 'multi') return 500;
+      return 0;
+    }
+
+    function getMaskCost() {
+      if (data.practiceType === 'single') return 10;
+      if (data.practiceType === 'multi') return 7;
+      return 0;
+    }
+
+    function getScreeningCostPerPatient() {
+      // monthly program cost = device + subscription
+      // per patient allocation = (device+subscription)/over50 + mask
+      var over50 = results.over50Patients || 0;
+      if (!data.practiceType || !data.purchaseOption || over50 <= 0) return 0;
+
+      var monthlyProgramFixed = getMonthlyDeviceCost() + getMonthlySubscription();
+      var mask = getMaskCost();
+
+      return (monthlyProgramFixed / over50) + mask;
+    }
+
+    // -----------------------------
+    // Input type toggle
+    // -----------------------------
+    function setInputType(type) {
+      var weeklyInput = document.getElementById('patientsPerWeek');
+      var monthlyInput = document.getElementById('patientsPerMonth');
+
+      if (type === 'monthly' && data.inputType === 'weekly') {
+        if (weeklyInput && weeklyInput.value) {
+          var weeklyValue = parseInt(weeklyInput.value);
+          if (monthlyInput && weeklyValue > 0) monthlyInput.value = weeklyValue * 4;
+        }
+      } else if (type === 'weekly' && data.inputType === 'monthly') {
+        if (monthlyInput && monthlyInput.value) {
+          var monthlyValue = parseInt(monthlyInput.value);
+          if (weeklyInput && monthlyValue > 0) weeklyInput.value = Math.round(monthlyValue / 4);
+        }
+      }
+
+      data.inputType = type;
+
+      var weekly = document.getElementById('weeklyBtn');
+      var monthly = document.getElementById('monthlyBtn');
+      var weeklyInputDiv = document.getElementById('weeklyInput');
+      var monthlyInputDiv = document.getElementById('monthlyInput');
+
+      if (weekly) weekly.className = type === 'weekly' ? 'toggle-btn active' : 'toggle-btn inactive';
+      if (monthly) monthly.className = type === 'monthly' ? 'toggle-btn active' : 'toggle-btn inactive';
+      if (weeklyInputDiv) weeklyInputDiv.className = type === 'weekly' ? '' : 'hidden';
+      if (monthlyInputDiv) monthlyInputDiv.className = type === 'monthly' ? '' : 'hidden';
+
+      calculate();
+    }
+
+    function updateOver50() {
+      var range = document.getElementById('over50Range');
+      if (!range) return;
+
+      data.over50Percent = parseInt(range.value);
+      setText('over50Value', range.value + '%');
+
+      if (results.monthlyPatients > 0) {
+        results.over50Patients = Math.round(results.monthlyPatients * (data.over50Percent / 100));
+        setText('over50Count', results.over50Patients);
+
+        // Recalculate AMD/Diabetes patients based on new over50
+        const amdSelect = document.getElementById('amdSelect');
+        if (amdSelect && amdSelect.value === 'AMD') {
+          results.amdPatients = Math.round(results.over50Patients * (data.amdPercent / 100));
+        } else {
+          results.amdPatients = 0;
+        }
+
+        const diabetesSelect = document.getElementById('diabetesSelect');
+        if (diabetesSelect && diabetesSelect.value === 'Diabetes') {
+          results.diabetesPatients = Math.round(results.over50Patients * (data.diabetesPercent / 100));
+        } else {
+          results.diabetesPatients = 0;
+        }
+
+        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+
+        setText('amdPatientCount', results.amdPatients);
+        setText('diabetesPatientCount', results.diabetesPatients);
+        setText('amdCount', results.amdPatients);
+        setText('diabetesCount', results.diabetesPatients);
+        setText('baselinePatientCount', results.baselinePatients);
+
+        updateBreakdown();
+      }
+
+      checkSubmit();
+    }
+
+    // -----------------------------
+    // AMD / Diabetes patient sliders
+    // -----------------------------
+    function updateAmdPatients(skipDiabetesUpdate) {
+      const select = document.getElementById('amdSelect');
+      const range = document.getElementById('amdRange');
+      const percentage = parseInt(range.value) || 0;
+
+      const display = document.getElementById('amdPercentageDisplay');
+      const countSpan = document.getElementById('amdPatientCount');
+      const amdCount = document.getElementById('amdCount');
+
+      if (display) display.textContent = percentage + '%';
+
+      const over50Patients = results.over50Patients || 0;
+
+      let amdPatients = 0;
+      if (select && select.value === 'AMD') {
+        amdPatients = Math.round(over50Patients * (percentage / 100));
+        data.amdPercent = percentage;
+      } else {
+        data.amdPercent = 0;
+      }
+
+      if (countSpan) countSpan.textContent = amdPatients;
+      if (amdCount) amdCount.textContent = amdPatients;
+      results.amdPatients = amdPatients;
+
+      if (!skipDiabetesUpdate) {
+        const diabetesRange = document.getElementById('diabetesRange');
+        const currentDiabetesPercent = data.diabetesPercent || 0;
+        if (percentage + currentDiabetesPercent > 100 && diabetesRange) {
+          const newDiabetesPercent = 100 - percentage;
+          diabetesRange.value = newDiabetesPercent;
+          data.diabetesPercent = newDiabetesPercent;
+          document.getElementById('diabetesPercentageDisplay').textContent = newDiabetesPercent + '%';
+        }
+      }
+
+      updateDiabetesPatients(true);
+
+      const diabetesPatients = results.diabetesPatients || 0;
+      results.baselinePatients = Math.max(0, over50Patients - amdPatients - diabetesPatients);
+      setText('baselinePatientCount', results.baselinePatients);
+
+      updateAmdBreakdown();
+      updateBreakdown();
+    }
+
+    function updateDiabetesPatients(skipAmdUpdate) {
+      const select = document.getElementById('diabetesSelect');
+      const range = document.getElementById('diabetesRange');
+      const percentage = parseInt(range.value) || 0;
+
+      const display = document.getElementById('diabetesPercentageDisplay');
+      const countSpan = document.getElementById('diabetesPatientCount');
+      const diabetesCount = document.getElementById('diabetesCount');
+
+      if (display) display.textContent = percentage + '%';
+
+      const over50Patients = results.over50Patients || 0;
+
+      if (!skipAmdUpdate) {
+        const amdRange = document.getElementById('amdRange');
+        const currentAmdPercent = data.amdPercent || 0;
+        if (percentage + currentAmdPercent > 100 && amdRange) {
+          const newAmdPercent = 100 - percentage;
+          amdRange.value = newAmdPercent;
+          data.amdPercent = newAmdPercent;
+          document.getElementById('amdPercentageDisplay').textContent = newAmdPercent + '%';
+          results.amdPatients = Math.round(over50Patients * (newAmdPercent / 100));
+          document.getElementById('amdPatientCount').textContent = results.amdPatients;
+          document.getElementById('amdCount').textContent = results.amdPatients;
+        }
+      }
+
+      const amdPatients = results.amdPatients || 0;
+
+      let diabetesPatients = 0;
+      if (select && select.value === 'Diabetes') {
+        diabetesPatients = Math.round(over50Patients * (percentage / 100));
+        data.diabetesPercent = percentage;
+      } else {
+        data.diabetesPercent = 0;
+      }
+
+      if (countSpan) countSpan.textContent = diabetesPatients;
+      if (diabetesCount) diabetesCount.textContent = diabetesPatients;
+
+      results.diabetesPatients = diabetesPatients;
+
+      results.baselinePatients = Math.max(0, over50Patients - amdPatients - diabetesPatients);
+      setText('baselinePatientCount', results.baselinePatients);
+
+      if (!skipAmdUpdate) updateAmdBreakdown();
+      updateDiabetesBreakdown();
+      updateBreakdown();
+    }
+
+    // -----------------------------
+    // AMD / Diabetes detection revenue breakdown (Yearly)
+    // -----------------------------
+    function updateAmdBreakdown() {
+      let total = 0;
+      let selectedTests = [];
+
+      if (document.getElementById('amd1')?.checked) { total += 90; selectedTests.push('Routine Eye Exam: $90.00'); }
+      if (document.getElementById('amd2')?.checked) { total += 36; selectedTests.push('Fundus Photography: $36.00'); }
+      if (document.getElementById('amd3')?.checked) { total += 57; selectedTests.push('OCTA Retina: $57.00'); }
+      if (document.getElementById('amd4')?.checked) { total += 153; selectedTests.push('Fluorescein Angiography: $153.00'); }
+      //  ADDED
+      if (document.getElementById('amd5')?.checked) { total += 58.83; selectedTests.push('Dark Adaptation (Fellow Eye): $58.83'); }
+
+      const testList = document.getElementById('amdTestsList');
+      if (testList) {
+        testList.innerHTML = selectedTests.length > 0
+          ? selectedTests.map(test => `<div>• ${test}</div>`).join('')
+          : '<div style="color:#999;">No tests selected</div>';
+      }
+
+      document.getElementById('amdPerPatientTotal').textContent = total.toFixed(2);
+      updateBreakdown();
+    }
+
+    function updateDiabetesBreakdown() {
+      let total = 0;
+      let selectedTests = [];
+
+      if (document.getElementById('diabetes1')?.checked) { total += 90; selectedTests.push('Routine Eye Exam: $90.00'); }
+      if (document.getElementById('diabetes2')?.checked) { total += 36; selectedTests.push('Fundus Photography: $36.00'); }
+      if (document.getElementById('diabetes3')?.checked) { total += 84; selectedTests.push('Visual Fields Exam: $84.00'); }
+      if (document.getElementById('diabetes4')?.checked) { total += 130; selectedTests.push('Extended Opthalmoscopy: $130.00'); }
+      if (document.getElementById('diabetes5')?.checked) { total += 126; selectedTests.push('ERG Exam: $126.00'); }
+      //  ADDED
+      if (document.getElementById('diabetes6')?.checked) { total += 58.83; selectedTests.push('Dark Adaptation (Fellow Eye): $58.83'); }
+
+      const testList = document.getElementById('diabetesTestsList');
+      if (testList) {
+        testList.innerHTML = selectedTests.length > 0
+          ? selectedTests.map(test => `<div>• ${test}</div>`).join('')
+          : '<div style="color:#999;">No tests selected</div>';
+      }
+
+      document.getElementById('diabetesPerPatientTotal').textContent = total.toFixed(2);
+      updateBreakdown();
+    }
+
+    // -----------------------------
+    // Dropdown handlers
+    // -----------------------------
+    function handleAmdChange() {
+      const select = document.getElementById('amdSelect');
+      const checkboxContainer = document.getElementById('amdCheckboxes');
+      const amdBreakdown = document.querySelector('.breakdown-item.breakdown-medical');
+      const breakdownCard = document.getElementById('breakdownCard');
+
+      if (select.value === 'AMD') {
+        checkboxContainer.classList.add('show');
+        if (amdBreakdown) amdBreakdown.classList.remove('hidden');
+        if (breakdownCard) breakdownCard.classList.remove('hidden');
+        updateAmdPatients();
+      } else {
+        checkboxContainer.classList.remove('show');
+        if (amdBreakdown) amdBreakdown.classList.add('hidden');
+        ['amd1','amd2','amd3','amd4','amd5'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+
+        document.getElementById('amdTestsList').innerHTML = '<div style="color:#999;">No tests selected</div>';
+        document.getElementById('amdPerPatientTotal').textContent = '0';
+        document.getElementById('amdPatientCount').textContent = '0';
+        document.getElementById('amdCount').textContent = '0';
+
+        results.amdPatients = 0;
+        data.amdPercent = 0;
+
+        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+        setText('baselinePatientCount', results.baselinePatients);
+        updateBreakdown();
+      }
+    }
+
+    function handleDiabetesChange() {
+      const select = document.getElementById('diabetesSelect');
+      const checkboxContainer = document.getElementById('diabetesCheckboxes');
+      const diabetesBreakdown = document.querySelector('.breakdown-item.breakdown-diabetes');
+      const breakdownCard = document.getElementById('breakdownCard');
+
+      if (select.value === 'Diabetes') {
+        checkboxContainer.classList.add('show');
+        if (diabetesBreakdown) diabetesBreakdown.classList.remove('hidden');
+        if (breakdownCard) breakdownCard.classList.remove('hidden');
+        updateDiabetesPatients();
+      } else {
+        checkboxContainer.classList.remove('show');
+        if (diabetesBreakdown) diabetesBreakdown.classList.add('hidden');
+        ['diabetes1','diabetes2','diabetes3','diabetes4','diabetes5','diabetes6'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+
+        document.getElementById('diabetesTestsList').innerHTML = '<div style="color:#999;">No tests selected</div>';
+        document.getElementById('diabetesPerPatientTotal').textContent = '0';
+        document.getElementById('diabetesPatientCount').textContent = '0';
+        document.getElementById('diabetesCount').textContent = '0';
+
+        results.diabetesPatients = 0;
+        data.diabetesPercent = 0;
+
+        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+        setText('baselinePatientCount', results.baselinePatients);
+        updateBreakdown();
+      }
+    }
+
+    // -----------------------------
+    // Main calculate
+    // -----------------------------
+    function calculate() {
+      var practiceType = document.getElementById('practiceType');
+      var purchaseOption = document.getElementById('purchaseOption');
+      var patientsPerWeek = document.getElementById('patientsPerWeek');
+      var patientsPerMonth = document.getElementById('patientsPerMonth');
+
+      if (practiceType) data.practiceType = practiceType.value;
+      if (purchaseOption) data.purchaseOption = purchaseOption.value;
+      if (patientsPerWeek) data.patientsPerWeek = parseInt(patientsPerWeek.value) || 0;
+      if (patientsPerMonth) data.patientsPerMonth = parseInt(patientsPerMonth.value) || 0;
+
+      if (data.inputType === 'weekly' && data.patientsPerWeek > 0) {
+        results.monthlyPatients = data.patientsPerWeek * 4;
+        setText('monthlyEquivalent', results.monthlyPatients);
+        var preview = document.getElementById('weeklyPreview');
+        if (preview) preview.className = 'info-box';
+      } else if (data.inputType === 'monthly' && data.patientsPerMonth > 0) {
+        results.monthlyPatients = data.patientsPerMonth;
+      } else {
+        results.monthlyPatients = 0;
+        var preview2 = document.getElementById('weeklyPreview');
+        if (preview2) preview2.className = 'info-box hidden';
+      }
+
+      results.over50Patients = Math.round(results.monthlyPatients * (data.over50Percent / 100));
+      setText('over50Count', results.over50Patients);
+
+      const amdSelect = document.getElementById('amdSelect');
+      results.amdPatients = (amdSelect && amdSelect.value === 'AMD')
+        ? Math.round(results.over50Patients * (data.amdPercent / 100))
+        : 0;
+
+      const diabetesSelect = document.getElementById('diabetesSelect');
+      results.diabetesPatients = (diabetesSelect && diabetesSelect.value === 'Diabetes')
+        ? Math.round(results.over50Patients * (data.diabetesPercent / 100))
+        : 0;
+
+      results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+
+      setText('baselinePatientCount', results.baselinePatients);
+      setText('amdPatientCount', results.amdPatients);
+      setText('diabetesPatientCount', results.diabetesPatients);
+      setText('amdCount', results.amdPatients);
+      setText('diabetesCount', results.diabetesPatients);
+
+      var breakdown = document.getElementById('breakdownCard');
+      if (breakdown) breakdown.className = results.monthlyPatients > 0 ? 'breakdown-card' : 'breakdown-card hidden';
+
+      updateBreakdown();
+      checkSubmit();
+    }
+
+    // -----------------------------
+    // Baseline cost explanation + correct handling
+    // Baseline "Patient Pay" means baseline patients cover their screening cost (no net impact).
+    // Baseline "Practice Pay" means baseline patients are a net cost at screeningCostPerPatient.
+    // -----------------------------
+    function updateBreakdown() {
+      results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+      setText('baselinePatientCount', results.baselinePatients);
+
+      if (!data.practiceType || !data.purchaseOption || results.over50Patients === 0) {
+        setText('patientPayDisplay', '0.00');
+        setText('practicePayDisplay', '0.00');
+        return;
+      }
+
+      var costPerScreening = getScreeningCostPerPatient();
+      setText('patientPayDisplay', costPerScreening.toFixed(2));
+      setText('practicePayDisplay', costPerScreening.toFixed(2));
+    }
+
+    function checkSubmit() {
+      var hasPatients = results.monthlyPatients > 0;
+      var hasPractice = data.practiceType !== '';
+      var hasPurchase = data.purchaseOption !== '';
+      var btn = document.getElementById('submitBtn');
+
+      if (!btn) return;
+
+      if (hasPractice && hasPurchase && hasPatients) {
+        btn.className = 'submit-btn enabled';
+        btn.disabled = false;
+      } else {
+        btn.className = 'submit-btn disabled';
+        btn.disabled = true;
+      }
+    }
+
+    // -----------------------------
+    // Report generation
+    // -----------------------------
+    function generateReport() {
+      var btn = document.getElementById('submitBtn');
+      if (!btn || btn.disabled) return;
+
+      setText('submitText', 'Generating Report...');
+      btn.disabled = true;
+
+      setTimeout(function () {
+        showFullReport();
+      }, 600);
+    }
+
+    // -----------------------------
+    // #1: No double-counting of screening cost
+    // We compute:
+    // screeningCostPerPatient = (device+subscription)/over50 + mask
+    //
+    // AMD net screening contribution:
+    //   amdPatients * (58.83 - screeningCostPerPatient)
+    //
+    // DR net screening contribution:
+    //   diabetesPatients * (58.83 - screeningCostPerPatient)
+    //
+    // Baseline:
+    //   Patient Pay => net 0 (they pay exactly the screening cost)
+    //   Practice Pay => net negative: -baselinePatients * screeningCostPerPatient
+    //
+    // Total monthly net screening profit = amdNet + diabetesNet + baselineNet
+    // -----------------------------
+    function showFullReport() {
+      try {
+      var screeningCostPerPatient = getScreeningCostPerPatient();
+
+      // Monthly screening revenue - NO subtraction of screening cost
+      var amdMonthlyRevenue = results.amdPatients * SCREENING_REIMBURSEMENT;
+      var diabetesMonthlyRevenue = results.diabetesPatients * SCREENING_REIMBURSEMENT;
+
+      // Calculate mask costs for baseline patients ($10 per mask)
+      var baselineMaskCost = results.baselinePatients * 10;
+
+      var baselineMonthlyRevenue = 0;
+      var baselinePatientPayRevenue = 0;
+      if (data.baselineModel === 'revenue') {
+        // Patient Pay: baseline patients pay for screening + masks
+        var baselineCostPerPatient = getScreeningCostPerPatient();
+        baselineMonthlyRevenue = results.baselinePatients * baselineCostPerPatient;
+        baselineMonthlyRevenue += baselineMaskCost; // Add mask revenue
+        baselinePatientPayRevenue = baselineMonthlyRevenue;
+      } else {
+        baselineMonthlyRevenue = 0; // Practice Pay: no revenue from baseline
+        baselinePatientPayRevenue = 0;
+      }
+
+      var monthlyScreeningRevenue = amdMonthlyRevenue + diabetesMonthlyRevenue + baselineMonthlyRevenue;
+
+      // Calculate baseline cost (only if Practice Pay) - INCLUDES mask cost
+      var baselineMonthlyCost = 0;
+      var baselineCostPerPatientDisplay = 0;
+      if (data.baselineModel === 'expense') {
+        var over50 = results.over50Patients || 0;
+        if (over50 > 0) {
+          var monthlyProgramFixed = getMonthlyDeviceCost() + getMonthlySubscription();
+          var baselineCostPerPatient = monthlyProgramFixed / over50; // Device/subscription allocation
+          baselineCostPerPatientDisplay = baselineCostPerPatient;
+          baselineMonthlyCost = results.baselinePatients * baselineCostPerPatient;
+          baselineMonthlyCost += baselineMaskCost; // Add mask cost
+        }
+      }
+
+      // Monthly program costs - INCLUDES baseline cost (with masks if Practice Pay)
+      var monthlyDeviceCost = getMonthlyDeviceCost();
+      var monthlySubscription = getMonthlySubscription();
+      var monthlyProgramCost = monthlyDeviceCost + monthlySubscription + baselineMonthlyCost;
+
+      // Detection revenue (yearly per patient) - capture checkbox states BEFORE template literal
+      let amdTreatmentRevenue = 0;
+      var amd1Checked = document.getElementById('amd1')?.checked || false;
+      var amd2Checked = document.getElementById('amd2')?.checked || false;
+      var amd3Checked = document.getElementById('amd3')?.checked || false;
+      var amd4Checked = document.getElementById('amd4')?.checked || false;
+      var amd5Checked = document.getElementById('amd5')?.checked || false;
+      if (amd1Checked) amdTreatmentRevenue += 90;
+      if (amd2Checked) amdTreatmentRevenue += 36;
+      if (amd3Checked) amdTreatmentRevenue += 57;
+      if (amd4Checked) amdTreatmentRevenue += 153;
+      if (amd5Checked) amdTreatmentRevenue += 58.83;
+
+      let diabetesTreatmentRevenue = 0;
+      var diabetes1Checked = document.getElementById('diabetes1')?.checked || false;
+      var diabetes2Checked = document.getElementById('diabetes2')?.checked || false;
+      var diabetes3Checked = document.getElementById('diabetes3')?.checked || false;
+      var diabetes4Checked = document.getElementById('diabetes4')?.checked || false;
+      var diabetes5Checked = document.getElementById('diabetes5')?.checked || false;
+      var diabetes6Checked = document.getElementById('diabetes6')?.checked || false;
+      if (diabetes1Checked) diabetesTreatmentRevenue += 90;
+      if (diabetes2Checked) diabetesTreatmentRevenue += 36;
+      if (diabetes3Checked) diabetesTreatmentRevenue += 84;
+      if (diabetes4Checked) diabetesTreatmentRevenue += 130;
+      if (diabetes5Checked) diabetesTreatmentRevenue += 126;
+      if (diabetes6Checked) diabetesTreatmentRevenue += 58.83;
+
+      var totalAmdDetection = amdTreatmentRevenue * results.amdPatients;
+      var totalDiabetesDetection = diabetesTreatmentRevenue * results.diabetesPatients;
+      var detectionRevenueYearly = totalAmdDetection + totalDiabetesDetection;
+
+      // 3-year ROI
+      var threeYearScreeningRevenue = monthlyScreeningRevenue * 36;
+      var threeYearDetection = detectionRevenueYearly * 3;
+      var threeYearTotalValue = threeYearScreeningRevenue + threeYearDetection;
+
+      // 3-year device investment = monthly program cost (with baseline included) x 36
+      var threeYearDeviceInvestment = monthlyProgramCost * 36;
+
+      var netProfit = threeYearTotalValue - threeYearDeviceInvestment;
+      var roi = threeYearDeviceInvestment > 0 ? (netProfit / threeYearDeviceInvestment) * 100 : 0;
+
+      // Build report HTML
+      var reportHTML = `
+      <div style="background: #2e8ab8; padding: 20px; min-height: 100vh;">
+        <div style="max-width: 1200px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+          <button onclick="location.reload()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 16px;">← Back to Calculator</button>
+
+          <h1 style="text-align: center; color: #1e3a8a; margin-bottom: 30px; font-size: 2.5em;">Twilight ROI Report</h1>
+
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #e9ecef;">
+            <h3 style="color: #1e3a8a; margin-bottom: 15px;">📋 Practice Configuration</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+              <div><strong>Practice Type:</strong> ${data.practiceType === 'single' ? 'Single Doctor' : 'Multi-Doctor'}</div>
+              <div><strong>Purchase Option:</strong> ${data.purchaseOption === 'lease' ? 'Lease ($4,997/year)' : 'Buy ($9,799 + $799/year maintenance; Year 1 included)'}</div>
+              <div><strong>Monthly Patients:</strong> ${(results.monthlyPatients || 0).toLocaleString()}</div>
+              <div><strong>Over-50 Screened /mo:</strong> ${(results.over50Patients || 0).toLocaleString()}</div>
+              <div><strong>Baseline Model:</strong> ${data.baselineModel === 'revenue' ? 'Patient Pay' : 'Practice Pay'}</div>
+              <div><strong>Screening Cost / Patient:</strong> $${screeningCostPerPatient.toFixed(2)}</div>
+              ${results.amdPatients > 0 ? `<div><strong>AMD Patients:</strong> ${results.amdPatients} (${data.amdPercent}%)</div>` : ''}
+              ${results.diabetesPatients > 0 ? `<div><strong>DR Patients:</strong> ${results.diabetesPatients} (${data.diabetesPercent}%)</div>` : ''}
+              <div><strong>Baseline Patients:</strong> ${results.baselinePatients}</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; margin-top: 20px;">
+            <div style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+              <h3 style="margin-bottom: 15px;">💰 Monthly Screening Revenue</h3>
+              <div style="font-size: 2em; font-weight: bold; color: #ffd700; margin: 10px 0;">$${Math.round(monthlyScreeningRevenue).toLocaleString()}</div>
+              <div>Total Screening Revenue</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+              <h3 style="margin-bottom: 15px;">📈 Yearly Detection Revenue</h3>
+              <div style="font-size: 2em; font-weight: bold; color: #ffd700; margin: 10px 0;">$${Math.round(detectionRevenueYearly).toLocaleString()}</div>
+              <div>Diagnostics Selection-Based</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #6f42c1, #563d7c); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+              <h3 style="margin-bottom: 15px;">💰 3-Year Total Revenue</h3>
+              <div style="font-size: 2em; font-weight: bold; color: #ffd700; margin: 10px 0;">$${Math.round(threeYearTotalValue).toLocaleString()}</div>
+              <div>(Screening Revenue + Detection)</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #20c997, #17a2b8); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+              <h3 style="margin-bottom: 15px;">📊 3-Year ROI</h3>
+              <div style="font-size: 2em; font-weight: bold; color: #ffd700; margin: 10px 0;">${Math.round(roi).toLocaleString()}%</div>
+              <div>Return on Investment</div>
+            </div>
+          </div>
+
+          <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-bottom: 15px;">💰 Monthly Screening Revenue</h3>
+            <div style="font-size: 14px; line-height: 1.8;">
+              ${results.amdPatients > 0 ? `
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>AMD Screening Revenue (${results.amdPatients} patients × $${SCREENING_REIMBURSEMENT.toFixed(2)}):</span>
+                <span>$${Math.round(amdMonthlyRevenue).toLocaleString()}</span>
+              </div>` : ''}
+
+              ${results.diabetesPatients > 0 ? `
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Diabetes Screening Revenue (${results.diabetesPatients} patients × $${SCREENING_REIMBURSEMENT.toFixed(2)}):</span>
+                <span>$${Math.round(diabetesMonthlyRevenue).toLocaleString()}</span>
+              </div>` : ''}
+
+              ${results.baselinePatients > 0 ? `
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Baseline Screening Revenue (${results.baselinePatients} patients; ${data.baselineModel === 'revenue' ? 'Patient Pay' : 'Practice Pay'}):</span>
+                <span>${data.baselineModel === 'revenue' ? '$' + Math.round(baselineMonthlyRevenue).toLocaleString() : '$0'}</span>
+              </div>` : ''}
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; border-top: 2px solid #4caf50; padding-top: 10px; font-weight: bold; color: #2e7d32;">
+                <span>Total Monthly Screening Revenue:</span>
+                <span>$${Math.round(monthlyScreeningRevenue).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-bottom: 15px;">💰 Yearly Detection Revenue Calculation</h3>
+            <div style="font-size: 14px; line-height: 1.8;">
+              ${totalAmdDetection > 0 ? `
+              <div style="margin-bottom: 15px;">
+                <strong>AMD Revenue (${results.amdPatients} patients):</strong>
+                <div style="margin-left: 20px; margin-top: 5px; font-size: 13px;">
+                  ${amd1Checked ? '• Routine Eye Exam: $90.00<br>' : ''}
+                  ${amd2Checked ? '• Fundus Photography: $36.00<br>' : ''}
+                  ${amd3Checked ? '• OCTA Retina: $57.00<br>' : ''}
+                  ${amd4Checked ? '• Fluorescein Angiography: $153.00<br>' : ''}
+                  ${amd5Checked ? '• Dark Adaptation (Fellow Eye): $58.83<br>' : ''}
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #a5d6a7;">
+                  <span>Per Patient: $${amdTreatmentRevenue.toFixed(2)}</span>
+                  <span><strong>Total: $${Math.round(totalAmdDetection).toLocaleString()}</strong></span>
+                </div>
+              </div>` : ''}
+
+              ${totalDiabetesDetection > 0 ? `
+              <div style="margin-bottom: 15px;">
+                <strong>Diabetes Revenue (${results.diabetesPatients} patients):</strong>
+                <div style="margin-left: 20px; margin-top: 5px; font-size: 13px;">
+                  ${diabetes1Checked ? '• Routine Eye Exam: $90.00<br>' : ''}
+                  ${diabetes2Checked ? '• Fundus Photography: $36.00<br>' : ''}
+                  ${diabetes3Checked ? '• Visual Fields Exam: $84.00<br>' : ''}
+                  ${diabetes4Checked ? '• Extended Opthalmoscopy: $130.00<br>' : ''}
+                  ${diabetes5Checked ? '• ERG Exam: $126.00<br>' : ''}
+                  ${diabetes6Checked ? '• Dark Adaptation (Fellow Eye): $58.83<br>' : ''}
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #a5d6a7;">
+                  <span>Per Patient: $${diabetesTreatmentRevenue.toFixed(2)}</span>
+                  <span><strong>Total: $${Math.round(totalDiabetesDetection).toLocaleString()}</strong></span>
+                </div>
+              </div>` : ''}
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; border-top: 2px solid #4caf50; padding-top: 10px; font-weight: bold; color: #2e7d32; font-size: 16px;">
+                <span>Total Yearly Detection Revenue:</span>
+                <span>$${Math.round(detectionRevenueYearly).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ff9800;">
+            <h3 style="color: #f57c00; margin-bottom: 15px;">💸 Baseline Costs (What's Included)</h3>
+            <div style="font-size: 14px; line-height: 1.8;">
+              <div style="margin-bottom: 10px;">
+                Baseline cost per patient (when Practice Pay is selected):
+                <strong>(Device + Subscription allocation) ÷ Over-50 Patients</strong>.
+                <br />
+                <strong>Mask Cost:</strong> $10 per baseline patient (${results.baselinePatients} patients × $10 = $${baselineMaskCost.toLocaleString()}).
+                <br />
+                Baseline cost is included in the monthly program cost for 3-year ROI calculation.
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Screening Cost per Patient:</span>
+                <span>$${screeningCostPerPatient.toFixed(2)}</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Baseline Patients:</span>
+                <span>${results.baselinePatients}</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Mask Cost (${results.baselinePatients} patients × $10):</span>
+                <span>$${baselineMaskCost.toLocaleString()}</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Baseline Cost Impact (only if Practice Pay):</span>
+                <span>$${data.baselineModel === 'expense' ? Math.round(baselineMonthlyCost).toLocaleString() : '0'}</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Baseline Patient Pay Revenue (if Patient Pay selected):</span>
+                <span>$${Math.round(baselinePatientPayRevenue).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ff9800;">
+            <h3 style="color: #f57c00; margin-bottom: 15px;">💸 Monthly Program Cost</h3>
+            <div style="font-size: 14px; line-height: 1.8;">
+              ${data.purchaseOption === 'buy' ? `
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Device + Maintenance (3-year average monthly):</span>
+                <span>$${Math.round(monthlyDeviceCost).toLocaleString()}</span>
+              </div>
+              <div style="font-size: 12px; color:#666; margin-top:-6px; margin-bottom:10px;">
+                (Maintenance Year 1 included, so only 2 years of $799 are counted over 3 years)
+              </div>
+              ` : `
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Device Lease ($4,997 ÷ 12 months):</span>
+                <span>$${Math.round(monthlyDeviceCost).toLocaleString()}</span>
+              </div>
+              `}
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Monthly Subscription Cost:</span>
+                <span>$${monthlySubscription.toLocaleString()}</span>
+              </div>
+
+              ${baselineMonthlyCost > 0 ? `
+              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                <span>Baseline Cost (${results.baselinePatients} patients × $${baselineCostPerPatientDisplay.toFixed(2)}):</span>
+                <span>$${Math.round(baselineMonthlyCost).toLocaleString()}</span>
+              </div>
+              ` : ''}
+
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; border-top: 2px solid #ff9800; padding-top: 10px; font-weight: bold; color: #f57c00;">
+                <span>Total Monthly Program Cost (Baseline Included):</span>
+                <span>$${Math.round(monthlyProgramCost).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #f3e5f5; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #9c27b0;">
+            <h3 style="color: #7b1fa2; margin-bottom: 15px;">📊 3-Year ROI Calculation</h3>
+            <div style="font-size: 14px; line-height: 1.8;">
+              <div style="margin-bottom: 15px; padding: 10px; background: #f3e5f5; border-left: 4px solid #9c27b0;">
+                <strong>Total Revenue (3 Years):</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; margin-left: 20px;">
+                <span>3-Year Screening Revenue ($${Math.round(monthlyScreeningRevenue).toLocaleString()} × 36 months):</span>
+                <span>$${Math.round(threeYearScreeningRevenue).toLocaleString()}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; margin-left: 20px;">
+                <span>3-Year Detection Revenue ($${Math.round(detectionRevenueYearly).toLocaleString()} × 3 years):</span>
+                <span>$${Math.round(threeYearDetection).toLocaleString()}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; margin-left: 20px; border-top: 2px solid #9c27b0; padding-top: 10px; font-weight: bold; color: #7b1fa2;">
+                <span>3-Year Total Revenue:</span>
+                <span>$${Math.round(threeYearTotalValue).toLocaleString()}</span>
+              </div>
+
+              <div style="margin-top: 20px; margin-bottom: 15px; padding: 10px; background: #f3e5f5; border-left: 4px solid #9c27b0;">
+                <strong>Total Investment (3 Years):</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; margin-left: 20px;">
+                <span>3-Year Device Investment ($${Math.round(monthlyProgramCost).toLocaleString()} × 36 months):</span>
+                <span>$${Math.round(threeYearDeviceInvestment).toLocaleString()}</span>
+              </div>
+
+              <div style="margin-top: 20px; margin-bottom: 15px; padding: 10px; background: #f3e5f5; border-left: 4px solid #9c27b0;">
+                <strong>Net Profit Calculation:</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; margin-left: 20px; border-top: 2px solid #9c27b0; padding-top: 10px; color: #7b1fa2;">
+                <span>Net Profit ($${Math.round(threeYearTotalValue).toLocaleString()} - $${Math.round(threeYearDeviceInvestment).toLocaleString()}):</span>
+                <span>$${Math.round(netProfit).toLocaleString()}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 10px 0; margin-left: 20px; border-top: 2px solid #9c27b0; padding-top: 10px; font-weight: bold; color: #7b1fa2; font-size: 18px;">
+                <span>3-Year ROI ((${Math.round(netProfit).toLocaleString()} ÷ ${Math.round(threeYearDeviceInvestment).toLocaleString()}) × 100):</span>
+                <span>${Math.round(roi).toLocaleString()}%</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      `;
+
+      document.body.innerHTML = reportHTML;
+
+      setTimeout(addPrintButton, 100);
+      } catch (error) {
+        console.error('Error generating report:', error);
+        alert('Error generating report. Please check the console for details.');
+        var btn = document.getElementById('submitBtn');
+        if (btn) {
+          btn.disabled = false;
+          setText('submitText', 'Get Full ROI Report');
+        }
+      }
+    }
+
+    function addPrintButton() {
+      const printBtn = document.createElement('button');
+      printBtn.innerHTML = '🖨️ Print / Save as PDF';
+      printBtn.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 9999;
+        transition: all 0.3s;
+      `;
+
+      printBtn.onmouseover = function () {
+        this.style.background = '#45a049';
+        this.style.transform = 'scale(1.05)';
+      };
+
+      printBtn.onmouseout = function () {
+        this.style.background = '#4caf50';
+        this.style.transform = 'scale(1)';
+      };
+
+      printBtn.onclick = function () {
+        this.style.display = 'none';
+        window.print();
+        setTimeout(() => { this.style.display = 'block'; }, 100);
+      };
+
+      document.body.appendChild(printBtn);
+    }
+
+    // -----------------------------
+    // Event listeners
+    // -----------------------------
+    document.addEventListener('DOMContentLoaded', function () {
+      var practiceType = document.getElementById('practiceType');
+      var purchaseOption = document.getElementById('purchaseOption');
+      var patientsPerWeek = document.getElementById('patientsPerWeek');
+      var patientsPerMonth = document.getElementById('patientsPerMonth');
+      var over50Range = document.getElementById('over50Range');
+      var weeklyBtn = document.getElementById('weeklyBtn');
+      var monthlyBtn = document.getElementById('monthlyBtn');
+      var revenueOption = document.getElementById('revenueOption');
+      var expenseOption = document.getElementById('expenseOption');
+      var submitBtn = document.getElementById('submitBtn');
+
+      if (practiceType) practiceType.addEventListener('change', calculate);
+      if (purchaseOption) purchaseOption.addEventListener('change', calculate);
+      if (patientsPerWeek) patientsPerWeek.addEventListener('input', calculate);
+      if (patientsPerMonth) patientsPerMonth.addEventListener('input', calculate);
+      if (over50Range) over50Range.addEventListener('input', updateOver50);
+
+      if (weeklyBtn) weeklyBtn.addEventListener('click', function () { setInputType('weekly'); });
+      if (monthlyBtn) monthlyBtn.addEventListener('click', function () { setInputType('monthly'); });
+      if (revenueOption) revenueOption.addEventListener('click', function () { selectBaseline('revenue'); });
+      if (expenseOption) expenseOption.addEventListener('click', function () { selectBaseline('expense'); });
+      if (submitBtn) submitBtn.addEventListener('click', generateReport);
+
+      calculate();
+      checkSubmit();
+    });
+  </script>
+</body>
+
+</html>
