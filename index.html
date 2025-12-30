@@ -197,7 +197,7 @@
             <div class="checkbox-item">
               <label>
                 <input type="checkbox" id="amd1" onchange="updateAmdBreakdown();" />
-                Routine Eye Exam -<i>$90.00</i>
+                Medical Eye Exam -<i>$90.00</i>
                 <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">vsp direct</div>
               </label>
             </div>
@@ -226,13 +226,6 @@
               </label>
             </div>
 
-            
-            <div class="checkbox-item">
-              <label>
-                <input type="checkbox" id="amd5" onchange="updateAmdBreakdown();" />
-                Dark Adaptation (Fellow Eye) -<i>$58.83</i>
-              </label>
-            </div>
           </div>
 
           <!-- Diabetes Section -->
@@ -274,7 +267,7 @@
               <div class="checkbox-item">
                 <label>
                   <input type="checkbox" id="diabetes1" onchange="updateDiabetesBreakdown();" />
-                  Routine Eye Exam - <i>$90.00</i>
+                  Medical Eye Exam - <i>$90.00</i>
                   <div style="font-size: 11px; color: #888; margin-left: 5px; margin-top: 2px;">vsp direct</div>
                 </label>
               </div>
@@ -311,13 +304,6 @@
                 </label>
               </div>
 
-             
-              <div class="checkbox-item">
-                <label>
-                  <input type="checkbox" id="diabetes6" onchange="updateDiabetesBreakdown();" />
-                  Dark Adaptation (Fellow Eye) - <i>$58.83</i>
-                </label>
-              </div>
             </div>
           </div>
         </div>
@@ -428,6 +414,183 @@
     function setText(id, text) {
       var el = document.getElementById(id);
       if (el) el.textContent = text;
+    }
+
+    // -----------------------------
+    // Save and restore form state
+    // -----------------------------
+    function saveFormState() {
+      var formState = {
+        practiceType: data.practiceType,
+        purchaseOption: data.purchaseOption,
+        inputType: data.inputType,
+        patientsPerWeek: data.patientsPerWeek,
+        patientsPerMonth: data.patientsPerMonth,
+        over50Percent: data.over50Percent,
+        amdPercent: data.amdPercent,
+        diabetesPercent: data.diabetesPercent,
+        baselineModel: data.baselineModel,
+        amdSelect: document.getElementById('amdSelect')?.value || '',
+        diabetesSelect: document.getElementById('diabetesSelect')?.value || '',
+        amdCheckboxes: {
+          amd1: document.getElementById('amd1')?.checked || false,
+          amd2: document.getElementById('amd2')?.checked || false,
+          amd3: document.getElementById('amd3')?.checked || false,
+          amd4: document.getElementById('amd4')?.checked || false
+        },
+        diabetesCheckboxes: {
+          diabetes1: document.getElementById('diabetes1')?.checked || false,
+          diabetes2: document.getElementById('diabetes2')?.checked || false,
+          diabetes3: document.getElementById('diabetes3')?.checked || false,
+          diabetes4: document.getElementById('diabetes4')?.checked || false,
+          diabetes5: document.getElementById('diabetes5')?.checked || false
+        }
+      };
+      localStorage.setItem('roiCalculatorState', JSON.stringify(formState));
+    }
+
+    function restoreFormState() {
+      var savedState = localStorage.getItem('roiCalculatorState');
+      if (!savedState) return false;
+
+      try {
+        var formState = JSON.parse(savedState);
+
+        // Restore basic form fields
+        if (formState.practiceType) {
+          var practiceTypeEl = document.getElementById('practiceType');
+          if (practiceTypeEl) {
+            practiceTypeEl.value = formState.practiceType;
+            data.practiceType = formState.practiceType;
+          }
+        }
+
+        if (formState.purchaseOption) {
+          var purchaseOptionEl = document.getElementById('purchaseOption');
+          if (purchaseOptionEl) {
+            purchaseOptionEl.value = formState.purchaseOption;
+            data.purchaseOption = formState.purchaseOption;
+          }
+        }
+
+        // Restore input type
+        if (formState.inputType) {
+          setInputType(formState.inputType);
+        }
+
+        // Restore patient counts
+        if (formState.patientsPerWeek) {
+          var patientsPerWeekEl = document.getElementById('patientsPerWeek');
+          if (patientsPerWeekEl) {
+            patientsPerWeekEl.value = formState.patientsPerWeek;
+            data.patientsPerWeek = formState.patientsPerWeek;
+          }
+        }
+
+        if (formState.patientsPerMonth) {
+          var patientsPerMonthEl = document.getElementById('patientsPerMonth');
+          if (patientsPerMonthEl) {
+            patientsPerMonthEl.value = formState.patientsPerMonth;
+            data.patientsPerMonth = formState.patientsPerMonth;
+          }
+        }
+
+        // Restore percentages
+        if (formState.over50Percent !== undefined) {
+          data.over50Percent = formState.over50Percent;
+          var over50Range = document.getElementById('over50Range');
+          if (over50Range) {
+            over50Range.value = formState.over50Percent;
+            setText('over50Value', formState.over50Percent + '%');
+          }
+        }
+
+        if (formState.amdPercent !== undefined) {
+          data.amdPercent = formState.amdPercent;
+          var amdRange = document.getElementById('amdRange');
+          if (amdRange) {
+            amdRange.value = formState.amdPercent;
+            setText('amdPercentageDisplay', formState.amdPercent + '%');
+          }
+        }
+
+        if (formState.diabetesPercent !== undefined) {
+          data.diabetesPercent = formState.diabetesPercent;
+          var diabetesRange = document.getElementById('diabetesRange');
+          if (diabetesRange) {
+            diabetesRange.value = formState.diabetesPercent;
+            setText('diabetesPercentageDisplay', formState.diabetesPercent + '%');
+          }
+        }
+
+        // Restore baseline model
+        if (formState.baselineModel) {
+          selectBaseline(formState.baselineModel);
+        }
+
+        // Recalculate first to get patient counts
+        calculate();
+        updateOver50();
+
+        // Restore AMD dropdown and checkboxes (after percentages are set)
+        if (formState.amdSelect) {
+          var amdSelect = document.getElementById('amdSelect');
+          if (amdSelect) {
+            amdSelect.value = formState.amdSelect;
+            if (formState.amdSelect === 'AMD') {
+              handleAmdChange();
+              if (formState.amdCheckboxes) {
+                if (document.getElementById('amd1')) document.getElementById('amd1').checked = formState.amdCheckboxes.amd1;
+                if (document.getElementById('amd2')) document.getElementById('amd2').checked = formState.amdCheckboxes.amd2;
+                if (document.getElementById('amd3')) document.getElementById('amd3').checked = formState.amdCheckboxes.amd3;
+                if (document.getElementById('amd4')) document.getElementById('amd4').checked = formState.amdCheckboxes.amd4;
+                updateAmdBreakdown();
+              }
+              // Update AMD patients with saved percentage
+              updateAmdPatients();
+            }
+          }
+        }
+
+        // Restore Diabetes dropdown and checkboxes (after percentages are set)
+        if (formState.diabetesSelect) {
+          var diabetesSelect = document.getElementById('diabetesSelect');
+          if (diabetesSelect) {
+            diabetesSelect.value = formState.diabetesSelect;
+            if (formState.diabetesSelect === 'Diabetes') {
+              handleDiabetesChange();
+              if (formState.diabetesCheckboxes) {
+                if (document.getElementById('diabetes1')) document.getElementById('diabetes1').checked = formState.diabetesCheckboxes.diabetes1;
+                if (document.getElementById('diabetes2')) document.getElementById('diabetes2').checked = formState.diabetesCheckboxes.diabetes2;
+                if (document.getElementById('diabetes3')) document.getElementById('diabetes3').checked = formState.diabetesCheckboxes.diabetes3;
+                if (document.getElementById('diabetes4')) document.getElementById('diabetes4').checked = formState.diabetesCheckboxes.diabetes4;
+                if (document.getElementById('diabetes5')) document.getElementById('diabetes5').checked = formState.diabetesCheckboxes.diabetes5;
+                updateDiabetesBreakdown();
+              }
+              // Update Diabetes patients with saved percentage
+              updateDiabetesPatients();
+            }
+          }
+        }
+
+        // Final recalculation to ensure everything is in sync
+        calculate();
+        updateBreakdown();
+
+        return true;
+      } catch (e) {
+        console.error('Error restoring form state:', e);
+        return false;
+      }
+    }
+
+    function clearFormState() {
+      localStorage.removeItem('roiCalculatorState');
+    }
+
+    function goBackToCalculator() {
+      // Restore the calculator view
+      location.reload();
     }
 
     function selectBaseline(option) {
@@ -659,12 +822,10 @@
       let total = 0;
       let selectedTests = [];
 
-      if (document.getElementById('amd1')?.checked) { total += 90; selectedTests.push('Routine Eye Exam: $90.00'); }
+      if (document.getElementById('amd1')?.checked) { total += 90; selectedTests.push('Medical Eye Exam: $90.00'); }
       if (document.getElementById('amd2')?.checked) { total += 36; selectedTests.push('Fundus Photography: $36.00'); }
       if (document.getElementById('amd3')?.checked) { total += 57; selectedTests.push('OCTA Retina: $57.00'); }
       if (document.getElementById('amd4')?.checked) { total += 153; selectedTests.push('Fluorescein Angiography: $153.00'); }
-      //  ADDED
-      if (document.getElementById('amd5')?.checked) { total += 58.83; selectedTests.push('Dark Adaptation (Fellow Eye): $58.83'); }
 
       const testList = document.getElementById('amdTestsList');
       if (testList) {
@@ -681,13 +842,11 @@
       let total = 0;
       let selectedTests = [];
 
-      if (document.getElementById('diabetes1')?.checked) { total += 90; selectedTests.push('Routine Eye Exam: $90.00'); }
+      if (document.getElementById('diabetes1')?.checked) { total += 90; selectedTests.push('Medical Eye Exam: $90.00'); }
       if (document.getElementById('diabetes2')?.checked) { total += 36; selectedTests.push('Fundus Photography: $36.00'); }
       if (document.getElementById('diabetes3')?.checked) { total += 84; selectedTests.push('Visual Fields Exam: $84.00'); }
       if (document.getElementById('diabetes4')?.checked) { total += 130; selectedTests.push('Extended Opthalmoscopy: $130.00'); }
       if (document.getElementById('diabetes5')?.checked) { total += 126; selectedTests.push('ERG Exam: $126.00'); }
-      //  ADDED
-      if (document.getElementById('diabetes6')?.checked) { total += 58.83; selectedTests.push('Dark Adaptation (Fellow Eye): $58.83'); }
 
       const testList = document.getElementById('diabetesTestsList');
       if (testList) {
@@ -717,7 +876,7 @@
       } else {
         checkboxContainer.classList.remove('show');
         if (amdBreakdown) amdBreakdown.classList.add('hidden');
-        ['amd1','amd2','amd3','amd4','amd5'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+        ['amd1','amd2','amd3','amd4'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
 
         document.getElementById('amdTestsList').innerHTML = '<div style="color:#999;">No tests selected</div>';
         document.getElementById('amdPerPatientTotal').textContent = '0';
@@ -747,7 +906,7 @@
       } else {
         checkboxContainer.classList.remove('show');
         if (diabetesBreakdown) diabetesBreakdown.classList.add('hidden');
-        ['diabetes1','diabetes2','diabetes3','diabetes4','diabetes5','diabetes6'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+        ['diabetes1','diabetes2','diabetes3','diabetes4','diabetes5'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
 
         document.getElementById('diabetesTestsList').innerHTML = '<div style="color:#999;">No tests selected</div>';
         document.getElementById('diabetesPerPatientTotal').textContent = '0';
@@ -862,6 +1021,9 @@
       var btn = document.getElementById('submitBtn');
       if (!btn || btn.disabled) return;
 
+      // Save form state before generating report
+      saveFormState();
+
       setText('submitText', 'Generating Report...');
       btn.disabled = true;
 
@@ -938,12 +1100,10 @@
       var amd2Checked = document.getElementById('amd2')?.checked || false;
       var amd3Checked = document.getElementById('amd3')?.checked || false;
       var amd4Checked = document.getElementById('amd4')?.checked || false;
-      var amd5Checked = document.getElementById('amd5')?.checked || false;
       if (amd1Checked) amdTreatmentRevenue += 90;
       if (amd2Checked) amdTreatmentRevenue += 36;
       if (amd3Checked) amdTreatmentRevenue += 57;
       if (amd4Checked) amdTreatmentRevenue += 153;
-      if (amd5Checked) amdTreatmentRevenue += 58.83;
 
       let diabetesTreatmentRevenue = 0;
       var diabetes1Checked = document.getElementById('diabetes1')?.checked || false;
@@ -951,13 +1111,11 @@
       var diabetes3Checked = document.getElementById('diabetes3')?.checked || false;
       var diabetes4Checked = document.getElementById('diabetes4')?.checked || false;
       var diabetes5Checked = document.getElementById('diabetes5')?.checked || false;
-      var diabetes6Checked = document.getElementById('diabetes6')?.checked || false;
       if (diabetes1Checked) diabetesTreatmentRevenue += 90;
       if (diabetes2Checked) diabetesTreatmentRevenue += 36;
       if (diabetes3Checked) diabetesTreatmentRevenue += 84;
       if (diabetes4Checked) diabetesTreatmentRevenue += 130;
       if (diabetes5Checked) diabetesTreatmentRevenue += 126;
-      if (diabetes6Checked) diabetesTreatmentRevenue += 58.83;
 
       var totalAmdDetection = amdTreatmentRevenue * results.amdPatients;
       var totalDiabetesDetection = diabetesTreatmentRevenue * results.diabetesPatients;
@@ -978,7 +1136,7 @@
       var reportHTML = `
       <div style="background: #2e8ab8; padding: 20px; min-height: 100vh;">
         <div style="max-width: 1200px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-          <button onclick="location.reload()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 16px;">← Back to Calculator</button>
+          <button onclick="goBackToCalculator()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 16px;">← Back to Calculator</button>
 
           <h1 style="text-align: center; color: #1e3a8a; margin-bottom: 30px; font-size: 2.5em;">Twilight ROI Report</h1>
 
@@ -1058,11 +1216,10 @@
               <div style="margin-bottom: 15px;">
                 <strong>AMD Revenue (${results.amdPatients} patients):</strong>
                 <div style="margin-left: 20px; margin-top: 5px; font-size: 13px;">
-                  ${amd1Checked ? '• Routine Eye Exam: $90.00<br>' : ''}
+                  ${amd1Checked ? '• Medical Eye Exam: $90.00<br>' : ''}
                   ${amd2Checked ? '• Fundus Photography: $36.00<br>' : ''}
                   ${amd3Checked ? '• OCTA Retina: $57.00<br>' : ''}
                   ${amd4Checked ? '• Fluorescein Angiography: $153.00<br>' : ''}
-                  ${amd5Checked ? '• Dark Adaptation (Fellow Eye): $58.83<br>' : ''}
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #a5d6a7;">
                   <span>Per Patient: $${amdTreatmentRevenue.toFixed(2)}</span>
@@ -1074,12 +1231,11 @@
               <div style="margin-bottom: 15px;">
                 <strong>Diabetes Revenue (${results.diabetesPatients} patients):</strong>
                 <div style="margin-left: 20px; margin-top: 5px; font-size: 13px;">
-                  ${diabetes1Checked ? '• Routine Eye Exam: $90.00<br>' : ''}
+                  ${diabetes1Checked ? '• Medical Eye Exam: $90.00<br>' : ''}
                   ${diabetes2Checked ? '• Fundus Photography: $36.00<br>' : ''}
                   ${diabetes3Checked ? '• Visual Fields Exam: $84.00<br>' : ''}
                   ${diabetes4Checked ? '• Extended Opthalmoscopy: $130.00<br>' : ''}
                   ${diabetes5Checked ? '• ERG Exam: $126.00<br>' : ''}
-                  ${diabetes6Checked ? '• Dark Adaptation (Fellow Eye): $58.83<br>' : ''}
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #a5d6a7;">
                   <span>Per Patient: $${diabetesTreatmentRevenue.toFixed(2)}</span>
@@ -1295,8 +1451,16 @@
       if (expenseOption) expenseOption.addEventListener('click', function () { selectBaseline('expense'); });
       if (submitBtn) submitBtn.addEventListener('click', generateReport);
 
-      calculate();
-      checkSubmit();
+      // Try to restore saved form state
+      var restored = restoreFormState();
+      if (!restored) {
+        // If no saved state, calculate normally
+        calculate();
+        checkSubmit();
+      } else {
+        // If restored, check submit button state
+        checkSubmit();
+      }
     });
   </script>
 </body>
