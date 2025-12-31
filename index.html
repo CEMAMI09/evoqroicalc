@@ -101,8 +101,8 @@
           <label>Practice Type</label>
           <select id="practiceType">
             <option value="" disabled selected>Select Practice Type</option>
-            <option value="single">Single Doctor Practice</option>
-            <option value="multi">Multi-Doctor Practice</option>
+            <option value="single">Single Location Practice</option>
+            <option value="multi">Multi Location Practice</option>
           </select>
         </div>
 
@@ -309,12 +309,20 @@
         </div>
 
         <div class="form-group">
+          <label>CPT Code 92284 Reimbursement</label>
+          <input type="number" id="cptReimbursement" placeholder="Enter reimbursement amount" step="0.01" min="0" value="58.83" />
+          <div style="margin-top: 5px; font-size: 12px; color: #666;">
+            Enter your reimbursement amount for CPT code 92284 (used for AMD and DR screening revenue)
+          </div>
+        </div>
+
+        <div class="form-group">
           <label>Baseline Screening Financial Model</label>
           <div style="margin-top: 8px; font-size: 10px;">
             (Monthly Program Cost / (50+ yr Patients /mo)) + mask cost
           </div>
           <div style="margin-top: 5px; font-size: 14px; color: #666;">
-            <span id="baselinePatientCount">0</span> baseline screening patients (over 50 without AMD/DR)
+            <span id="baselinePatientCount">0</span> baseline screening patients (all patients over 50)
           </div>
 
           <div class="radio-group">
@@ -396,7 +404,8 @@
       over50Percent: 50,
       amdPercent: 0,
       diabetesPercent: 0,
-      baselineModel: 'revenue'
+      baselineModel: 'revenue',
+      cptReimbursement: 58.83
     };
 
     var results = {
@@ -408,8 +417,18 @@
       medicalPatients: 0 // not used in this version, but kept to avoid undefined references
     };
 
-    // Constants
-    const SCREENING_REIMBURSEMENT = 58.83;
+    // Get CPT code reimbursement amount
+    function getCptReimbursement() {
+      var cptInput = document.getElementById('cptReimbursement');
+      if (cptInput && cptInput.value) {
+        var value = parseFloat(cptInput.value);
+        if (!isNaN(value) && value > 0) {
+          data.cptReimbursement = value;
+          return value;
+        }
+      }
+      return data.cptReimbursement || 58.83;
+    }
 
     function setText(id, text) {
       var el = document.getElementById(id);
@@ -430,6 +449,7 @@
         amdPercent: data.amdPercent,
         diabetesPercent: data.diabetesPercent,
         baselineModel: data.baselineModel,
+        cptReimbursement: data.cptReimbursement,
         amdSelect: document.getElementById('amdSelect')?.value || '',
         diabetesSelect: document.getElementById('diabetesSelect')?.value || '',
         amdCheckboxes: {
@@ -526,6 +546,15 @@
         // Restore baseline model
         if (formState.baselineModel) {
           selectBaseline(formState.baselineModel);
+        }
+
+        // Restore CPT reimbursement
+        if (formState.cptReimbursement !== undefined) {
+          data.cptReimbursement = formState.cptReimbursement;
+          var cptInput = document.getElementById('cptReimbursement');
+          if (cptInput) {
+            cptInput.value = formState.cptReimbursement;
+          }
         }
 
         // Recalculate first to get patient counts
@@ -702,7 +731,7 @@
           results.diabetesPatients = 0;
         }
 
-        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+        results.baselinePatients = results.over50Patients;
 
         setText('amdPatientCount', results.amdPatients);
         setText('diabetesPatientCount', results.diabetesPatients);
@@ -758,7 +787,7 @@
       updateDiabetesPatients(true);
 
       const diabetesPatients = results.diabetesPatients || 0;
-      results.baselinePatients = Math.max(0, over50Patients - amdPatients - diabetesPatients);
+      results.baselinePatients = over50Patients;
       setText('baselinePatientCount', results.baselinePatients);
 
       updateAmdBreakdown();
@@ -807,7 +836,7 @@
 
       results.diabetesPatients = diabetesPatients;
 
-      results.baselinePatients = Math.max(0, over50Patients - amdPatients - diabetesPatients);
+      results.baselinePatients = over50Patients;
       setText('baselinePatientCount', results.baselinePatients);
 
       if (!skipAmdUpdate) updateAmdBreakdown();
@@ -886,7 +915,7 @@
         results.amdPatients = 0;
         data.amdPercent = 0;
 
-        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+        results.baselinePatients = results.over50Patients;
         setText('baselinePatientCount', results.baselinePatients);
         updateBreakdown();
       }
@@ -916,7 +945,7 @@
         results.diabetesPatients = 0;
         data.diabetesPercent = 0;
 
-        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+        results.baselinePatients = results.over50Patients;
         setText('baselinePatientCount', results.baselinePatients);
         updateBreakdown();
       }
@@ -962,7 +991,7 @@
         ? Math.round(results.over50Patients * (data.diabetesPercent / 100))
         : 0;
 
-      results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+      results.baselinePatients = results.over50Patients;
 
       setText('baselinePatientCount', results.baselinePatients);
       setText('amdPatientCount', results.amdPatients);
@@ -983,7 +1012,7 @@
     // Baseline "Practice Pay" means baseline patients are a net cost at screeningCostPerPatient.
     // -----------------------------
     function updateBreakdown() {
-      results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
+      results.baselinePatients = results.over50Patients;
       setText('baselinePatientCount', results.baselinePatients);
 
       if (!data.practiceType || !data.purchaseOption || results.over50Patients === 0) {
@@ -1053,20 +1082,19 @@
       try {
       var screeningCostPerPatient = getScreeningCostPerPatient();
 
-      // Monthly screening revenue - NO subtraction of screening cost
-      var amdMonthlyRevenue = results.amdPatients * SCREENING_REIMBURSEMENT;
-      var diabetesMonthlyRevenue = results.diabetesPatients * SCREENING_REIMBURSEMENT;
+      // Get CPT code reimbursement amount
+      var cptReimbursement = getCptReimbursement();
 
-      // Calculate mask costs for baseline patients ($10 per mask)
-      var baselineMaskCost = results.baselinePatients * 10;
+      // Monthly screening revenue - NO subtraction of screening cost
+      var amdMonthlyRevenue = results.amdPatients * cptReimbursement;
+      var diabetesMonthlyRevenue = results.diabetesPatients * cptReimbursement;
 
       var baselineMonthlyRevenue = 0;
       var baselinePatientPayRevenue = 0;
       if (data.baselineModel === 'revenue') {
-        // Patient Pay: baseline patients pay for screening + masks
+        // Patient Pay: baseline patients pay for screening (mask cost already included in getScreeningCostPerPatient)
         var baselineCostPerPatient = getScreeningCostPerPatient();
         baselineMonthlyRevenue = results.baselinePatients * baselineCostPerPatient;
-        baselineMonthlyRevenue += baselineMaskCost; // Add mask revenue
         baselinePatientPayRevenue = baselineMonthlyRevenue;
       } else {
         baselineMonthlyRevenue = 0; // Practice Pay: no revenue from baseline
@@ -1075,17 +1103,15 @@
 
       var monthlyScreeningRevenue = amdMonthlyRevenue + diabetesMonthlyRevenue + baselineMonthlyRevenue;
 
-      // Calculate baseline cost (only if Practice Pay) - INCLUDES mask cost
+      // Calculate baseline cost (only if Practice Pay) - mask cost already included in getScreeningCostPerPatient
       var baselineMonthlyCost = 0;
       var baselineCostPerPatientDisplay = 0;
       if (data.baselineModel === 'expense') {
         var over50 = results.over50Patients || 0;
         if (over50 > 0) {
-          var monthlyProgramFixed = getMonthlyDeviceCost() + getMonthlySubscription();
-          var baselineCostPerPatient = monthlyProgramFixed / over50; // Device/subscription allocation
+          var baselineCostPerPatient = getScreeningCostPerPatient(); // This already includes mask cost
           baselineCostPerPatientDisplay = baselineCostPerPatient;
           baselineMonthlyCost = results.baselinePatients * baselineCostPerPatient;
-          baselineMonthlyCost += baselineMaskCost; // Add mask cost
         }
       }
 
@@ -1143,7 +1169,7 @@
           <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #e9ecef;">
             <h3 style="color: #1e3a8a; margin-bottom: 15px;">📋 Practice Configuration</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
-              <div><strong>Practice Type:</strong> ${data.practiceType === 'single' ? 'Single Doctor' : 'Multi-Doctor'}</div>
+              <div><strong>Practice Type:</strong> ${data.practiceType === 'single' ? 'Single Location' : 'Multi Location'}</div>
               <div><strong>Purchase Option:</strong> ${data.purchaseOption === 'lease' ? 'Lease ($4,997/year)' : 'Buy ($9,799 + $799/year maintenance; Year 1 included)'}</div>
               <div><strong>Monthly Patients:</strong> ${(results.monthlyPatients || 0).toLocaleString()}</div>
               <div><strong>Over-50 Screened /mo:</strong> ${(results.over50Patients || 0).toLocaleString()}</div>
@@ -1186,13 +1212,13 @@
             <div style="font-size: 14px; line-height: 1.8;">
               ${results.amdPatients > 0 ? `
               <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>AMD Screening Revenue (${results.amdPatients} patients × $${SCREENING_REIMBURSEMENT.toFixed(2)}):</span>
+                <span>AMD Screening Revenue (${results.amdPatients} patients × $${cptReimbursement.toFixed(2)}):</span>
                 <span>$${Math.round(amdMonthlyRevenue).toLocaleString()}</span>
               </div>` : ''}
 
               ${results.diabetesPatients > 0 ? `
               <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>Diabetes Screening Revenue (${results.diabetesPatients} patients × $${SCREENING_REIMBURSEMENT.toFixed(2)}):</span>
+                <span>Diabetes Screening Revenue (${results.diabetesPatients} patients × $${cptReimbursement.toFixed(2)}):</span>
                 <span>$${Math.round(diabetesMonthlyRevenue).toLocaleString()}</span>
               </div>` : ''}
 
@@ -1257,7 +1283,7 @@
                 Baseline cost per patient (when Practice Pay is selected):
                 <strong>(Device + Subscription allocation) ÷ Over-50 Patients</strong>.
                 <br />
-                <strong>Mask Cost:</strong> $10 per baseline patient (${results.baselinePatients} patients × $10 = $${baselineMaskCost.toLocaleString()}).
+                <strong>Note:</strong> Mask cost is already included in the per-patient screening cost calculation.
                 <br />
                 Baseline cost is included in the monthly program cost for 3-year ROI calculation.
               </div>
@@ -1270,11 +1296,6 @@
               <div style="display: flex; justify-content: space-between; margin: 10px 0;">
                 <span>Baseline Patients:</span>
                 <span>${results.baselinePatients}</span>
-              </div>
-
-              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>Mask Cost (${results.baselinePatients} patients × $10):</span>
-                <span>$${baselineMaskCost.toLocaleString()}</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; margin: 10px 0;">
@@ -1433,6 +1454,7 @@
       var patientsPerWeek = document.getElementById('patientsPerWeek');
       var patientsPerMonth = document.getElementById('patientsPerMonth');
       var over50Range = document.getElementById('over50Range');
+      var cptReimbursement = document.getElementById('cptReimbursement');
       var weeklyBtn = document.getElementById('weeklyBtn');
       var monthlyBtn = document.getElementById('monthlyBtn');
       var revenueOption = document.getElementById('revenueOption');
@@ -1444,6 +1466,16 @@
       if (patientsPerWeek) patientsPerWeek.addEventListener('input', calculate);
       if (patientsPerMonth) patientsPerMonth.addEventListener('input', calculate);
       if (over50Range) over50Range.addEventListener('input', updateOver50);
+      if (cptReimbursement) {
+        cptReimbursement.addEventListener('input', function() {
+          getCptReimbursement();
+          calculate();
+        });
+        cptReimbursement.addEventListener('change', function() {
+          getCptReimbursement();
+          calculate();
+        });
+      }
 
       if (weeklyBtn) weeklyBtn.addEventListener('click', function () { setInputType('weekly'); });
       if (monthlyBtn) monthlyBtn.addEventListener('click', function () { setInputType('monthly'); });
