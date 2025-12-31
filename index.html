@@ -1104,7 +1104,7 @@
 
       var monthlyScreeningRevenue = amdMonthlyRevenue + diabetesMonthlyRevenue + baselineMonthlyRevenue;
 
-      // Calculate baseline cost (only if Practice Pay) - mask cost already included in getScreeningCostPerPatient
+      // Calculate baseline cost (only if Practice Pay) - for display purposes only, NOT included in monthly program cost
       var baselineMonthlyCost = 0;
       var baselineCostPerPatientDisplay = 0;
       if (data.baselineModel === 'expense') {
@@ -1116,10 +1116,10 @@
         }
       }
 
-      // Monthly program costs - INCLUDES baseline cost (with masks if Practice Pay)
+      // Monthly program costs - device + subscription only (baseline costs are separate when Practice Pay)
       var monthlyDeviceCost = getMonthlyDeviceCost();
       var monthlySubscription = getMonthlySubscription();
-      var monthlyProgramCost = monthlyDeviceCost + monthlySubscription + baselineMonthlyCost;
+      var monthlyProgramCost = monthlyDeviceCost + monthlySubscription;
 
       // Detection revenue (yearly per patient) - capture checkbox states BEFORE template literal
       let amdTreatmentRevenue = 0;
@@ -1334,15 +1334,8 @@
                 <span>$${monthlySubscription.toLocaleString()}</span>
               </div>
 
-              ${baselineMonthlyCost > 0 ? `
-              <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>Baseline Cost (${results.baselinePatients} patients × $${baselineCostPerPatientDisplay.toFixed(2)}):</span>
-                <span>$${Math.round(baselineMonthlyCost).toLocaleString()}</span>
-              </div>
-              ` : ''}
-
               <div style="display: flex; justify-content: space-between; margin: 10px 0; border-top: 2px solid #ff9800; padding-top: 10px; font-weight: bold; color: #f57c00;">
-                <span>Total Monthly Program Cost (Baseline Included):</span>
+                <span>Total Monthly Program Cost:</span>
                 <span>$${Math.round(monthlyProgramCost).toLocaleString()}</span>
               </div>
             </div>
