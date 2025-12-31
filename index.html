@@ -731,7 +731,7 @@
           results.diabetesPatients = 0;
         }
 
-        results.baselinePatients = results.over50Patients;
+        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
 
         setText('amdPatientCount', results.amdPatients);
         setText('diabetesPatientCount', results.diabetesPatients);
@@ -787,7 +787,7 @@
       updateDiabetesPatients(true);
 
       const diabetesPatients = results.diabetesPatients || 0;
-      results.baselinePatients = over50Patients;
+      results.baselinePatients = Math.max(0, over50Patients - amdPatients - diabetesPatients);
       setText('baselinePatientCount', results.baselinePatients);
 
       updateAmdBreakdown();
@@ -836,7 +836,7 @@
 
       results.diabetesPatients = diabetesPatients;
 
-      results.baselinePatients = over50Patients;
+      results.baselinePatients = Math.max(0, over50Patients - amdPatients - diabetesPatients);
       setText('baselinePatientCount', results.baselinePatients);
 
       if (!skipAmdUpdate) updateAmdBreakdown();
@@ -915,7 +915,7 @@
         results.amdPatients = 0;
         data.amdPercent = 0;
 
-        results.baselinePatients = results.over50Patients;
+        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
         setText('baselinePatientCount', results.baselinePatients);
         updateBreakdown();
       }
@@ -945,7 +945,7 @@
         results.diabetesPatients = 0;
         data.diabetesPercent = 0;
 
-        results.baselinePatients = results.over50Patients;
+        results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
         setText('baselinePatientCount', results.baselinePatients);
         updateBreakdown();
       }
@@ -991,7 +991,7 @@
         ? Math.round(results.over50Patients * (data.diabetesPercent / 100))
         : 0;
 
-      results.baselinePatients = results.over50Patients;
+      results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
 
       setText('baselinePatientCount', results.baselinePatients);
       setText('amdPatientCount', results.amdPatients);
@@ -1012,7 +1012,7 @@
     // Baseline "Practice Pay" means baseline patients are a net cost at screeningCostPerPatient.
     // -----------------------------
     function updateBreakdown() {
-      results.baselinePatients = results.over50Patients;
+      results.baselinePatients = Math.max(0, results.over50Patients - results.amdPatients - results.diabetesPatients);
       setText('baselinePatientCount', results.baselinePatients);
 
       if (!data.practiceType || !data.purchaseOption || results.over50Patients === 0) {
@@ -1084,10 +1084,11 @@
 
       // Get CPT code reimbursement amount
       var cptReimbursement = getCptReimbursement();
+      var screeningCostPerPatient = getScreeningCostPerPatient();
 
-      // Monthly screening revenue - NO subtraction of screening cost
-      var amdMonthlyRevenue = results.amdPatients * cptReimbursement;
-      var diabetesMonthlyRevenue = results.diabetesPatients * cptReimbursement;
+      // Monthly screening revenue - subtract screening cost from reimbursement
+      var amdMonthlyRevenue = results.amdPatients * (cptReimbursement - screeningCostPerPatient);
+      var diabetesMonthlyRevenue = results.diabetesPatients * (cptReimbursement - screeningCostPerPatient);
 
       var baselineMonthlyRevenue = 0;
       var baselinePatientPayRevenue = 0;
@@ -1212,13 +1213,13 @@
             <div style="font-size: 14px; line-height: 1.8;">
               ${results.amdPatients > 0 ? `
               <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>AMD Screening Revenue (${results.amdPatients} patients × $${cptReimbursement.toFixed(2)}):</span>
+                <span>AMD Screening Revenue (${results.amdPatients} patients × ($${cptReimbursement.toFixed(2)} - $${screeningCostPerPatient.toFixed(2)})):</span>
                 <span>$${Math.round(amdMonthlyRevenue).toLocaleString()}</span>
               </div>` : ''}
 
               ${results.diabetesPatients > 0 ? `
               <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                <span>Diabetes Screening Revenue (${results.diabetesPatients} patients × $${cptReimbursement.toFixed(2)}):</span>
+                <span>Diabetes Screening Revenue (${results.diabetesPatients} patients × ($${cptReimbursement.toFixed(2)} - $${screeningCostPerPatient.toFixed(2)})):</span>
                 <span>$${Math.round(diabetesMonthlyRevenue).toLocaleString()}</span>
               </div>` : ''}
 
